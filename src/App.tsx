@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { IonApp, IonContent, IonGrid, IonHeader, IonTitle, IonToolbar, IonRow, IonCol, IonLabel, IonInput, IonItem, IonButton, IonCard, IonCardContent, IonIcon } from '@ionic/react';
+import { IonApp, IonContent, IonGrid, IonHeader, IonTitle, IonToolbar, IonRow, IonCol, IonLabel, IonInput, IonItem, IonButton, IonCard, IonCardContent, IonIcon, IonAlert, IonSegment, IonSegmentButton } from '@ionic/react';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -19,17 +19,24 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import { calculator, calculatorOutline, calculatorSharp, refreshSharp } from "ionicons/icons"
+import Controls from './components/Controls';
+import Results from './components/Results';
 const App: React.FC = () => {
 	const priceInput = useRef<HTMLIonInputElement>(null);
 	const rentInput = useRef<HTMLIonInputElement>(null);
 	const [result, setResult] = useState<number>();
+	const [errorString, setErrorString] = useState<boolean>(false);
+	const [segmentValue, setSegmentValue] = useState<'month' | 'year'>('month');
 	const calculate = () => {
 		const priceValue = priceInput.current!.value;
 		const rentValue = rentInput.current!.value;
 
-		if (!priceValue || !rentValue) return
-		const renta = +rentValue * 12 * 100 / +priceValue
+		if (!priceValue || !rentValue || priceValue <= 0 || rentValue <= 0) {
+			setErrorString(true);
+			return
+		}
+		const factor = segmentValue === 'month' ? 12 : 1;
+		const renta = +rentValue * factor * 100 / +priceValue
 		setResult(renta);
 	}
 	const reset = () => {
@@ -37,7 +44,11 @@ const App: React.FC = () => {
 		rentInput.current!.value = '';
 		setResult(undefined);
 	}
+
+	const changeSegment = (event: CustomEvent) => setSegmentValue(event.detail.value);
 	return (
+		<React.Fragment>
+			<IonAlert isOpen={errorString} onDidDismiss={() => { setErrorString(false)}} message="Bad Value"/>
 		<IonApp>
 			<IonHeader>
 				<IonToolbar color='dark'>
@@ -47,6 +58,14 @@ const App: React.FC = () => {
 				</IonToolbar>
 			</IonHeader>
 			<IonContent className="ion-padding">
+				<IonSegment value={segmentValue} onIonChange={changeSegment}>
+					<IonSegmentButton value="month">
+						<IonLabel>Month</IonLabel>
+					</IonSegmentButton>
+					<IonSegmentButton value='year'>
+						<IonLabel>Year</IonLabel>
+					</IonSegmentButton>
+				</IonSegment>
 				<IonGrid>
 					<IonRow>
 						<IonCol>
@@ -62,37 +81,21 @@ const App: React.FC = () => {
 						<IonCol>
 							<IonItem>
 								<IonLabel position="floating">
-									Rent
-								</IonLabel>
+									Rent {segmentValue === "month" ? "(month)" : "(year)"}
+                				</IonLabel>
 								<IonInput type="number" ref={rentInput}></IonInput>
 							</IonItem>
 						</IonCol>
 					</IonRow>
-					<IonRow>
-						<IonCol className="ion-text-left">
-							<IonButton onClick={calculate}><IonIcon slot="start" icon={calculatorSharp} />Calculator</IonButton>
-						</IonCol>
-						<IonCol className="ion-text-right">
-							<IonButton fill="outline" onClick={reset}><IonIcon slot="start" icon={refreshSharp} />Reset</IonButton>
 
-						</IonCol >
-					</IonRow>
+					<Controls onCalculate={calculate} onReset={reset} />
+					{result && <Results result={result}/>}
 
-					<IonRow>
-						<IonCol>
-							<IonCard>
-							{result ?
-								<IonCardContent className="ion-text-center">
-									{result}
-								</IonCardContent>
-								: null
-							}
-							</IonCard>
-						</IonCol>
-					</IonRow>
+				
 				</IonGrid>
 			</IonContent>
 		</IonApp>
+		</React.Fragment>
 	)
 };
 
