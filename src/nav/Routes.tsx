@@ -6,6 +6,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router';
 import Liste from '../pages/Liste';
 import Profil from '../pages/Profil';
+import Details from '../pages/Details';
 
 interface ContainerProps { }
 
@@ -17,6 +18,7 @@ const Router: React.FC<ContainerProps> = () => {
         <IonRouterOutlet>
           <Route path="/Liste" component={Liste} exact/>
           <Route path="/Profil" component={Profil} exact/>
+          <Route path="/Details/*" component={Details} exact/>
           <Redirect exact from="/" to="/Liste" />
         </IonRouterOutlet>
 
